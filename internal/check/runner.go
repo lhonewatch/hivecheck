@@ -30,6 +30,8 @@ func NewRunner(timeout time.Duration, defs []Definition) *Runner {
 }
 
 // Run executes all definitions concurrently and returns their results.
+// Each check runs in its own goroutine and is subject to the shared timeout.
+// If a check's Fn returns an error, the result status is set to StatusUnknown.
 func (r *Runner) Run(ctx context.Context) []Result {
 	ctx, cancel := context.WithTimeout(ctx, r.Timeout)
 	defer cancel()
@@ -39,24 +41,7 @@ func (r *Runner) Run(ctx context.Context) []Result {
 	for _, def := range r.Definitions {
 		def := def
 		go func() {
-			start := time.Now()
-			value, msg, err := def.Fn(ctx)
-			dur := time.Since(start)
-
-			res := Result{
-				Name:      def.Name,
-				Threshold: def.Threshold,
-				Value:     value,
-				Message:   msg,
-				Duration:  dur,
-				Err:       err,
-			}
-			if err != nil {
-				res.Status = StatusUnknown
-			} else {
-				res.Status = def.Threshold.Evaluate(value)
-			}
-			resultCh <- res
+			resultCh <- r.runOne(ctx, def)
 		}()
 	}
 
@@ -65,4 +50,26 @@ func (r *Runner) Run(ctx context.Context) []Result {
 		results = append(results, <-resultCh)
 	}
 	return results
+}
+
+// runOne executes a single Definition and returns the corresponding Result.
+func (r *Runner) runOne(ctx context.Context, def Definition) Result {
+	start := time.Now()
+	value, msg, err := def.Fn(ctx)
+	dur := time.Since(start)
+
+	res := Result{
+		Name:      def.Name,
+		Threshold: def.Threshold,
+		Value:     value,
+		Message:   msg,
+		Duration:  dur,
+		Err:       err,
+	}
+	if err != nil {
+		res.Status = StatusUnknown
+	} else {
+		res.Status = def.Threshold.Evaluate(value)
+	}
+	return res
 }
