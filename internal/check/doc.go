@@ -10,6 +10,10 @@
 //   - Runner: executes multiple Definitions concurrently within a timeout
 //     and returns a slice of Results.
 //
+// Status precedence (lowest to highest): OK < WARN < CRITICAL < UNKNOWN.
+// A Runner aggregates individual Results; callers can use the highest Status
+// across all Results to determine the overall health of a system.
+//
 // Typical usage:
 //
 //	defs := []check.Definition{
