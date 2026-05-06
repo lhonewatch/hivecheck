@@ -29,6 +29,28 @@ func TestRunnerRun_OK(t *testing.T) {
 	}
 }
 
+func TestRunnerRun_Warn(t *testing.T) {
+	defs := []Definition{
+		{
+			Name:      "cpu",
+			Threshold: Threshold{Warn: 70, Critical: 90},
+			Fn: func(ctx context.Context) (float64, string, error) {
+				return 75, "cpu usage elevated", nil
+			},
+		},
+	}
+
+	runner := NewRunner(5*time.Second, defs)
+	results := runner.Run(context.Background())
+
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Status != StatusWarn {
+		t.Errorf("expected WARN, got %s", results[0].Status)
+	}
+}
+
 func TestRunnerRun_Critical(t *testing.T) {
 	defs := []Definition{
 		{
