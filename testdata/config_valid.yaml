@@ -1,0 +1,21 @@
+# Example hivecheck configuration used in integration tests.
+checks:
+  - name: auth-service
+    url: http://localhost:9001/health
+    interval: 15s
+    timeout: 3s
+    warn_at: 150
+    crit_at: 400
+
+  - name: inventory-api
+    url: http://localhost:9002/healthz
+    interval: 30s
+    timeout: 5s
+    warn_at: 200
+    crit_at: 600
+
+alerts:
+  - url: http://localhost:9999/webhook
+    headers:
+      Content-Type: application/json
+      X-Hivecheck-Token: test-token
