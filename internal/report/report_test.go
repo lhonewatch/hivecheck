@@ -29,6 +29,21 @@ func TestSummaryOverall(t *testing.T) {
 	}
 }
 
+// TestSummaryOverall_AllOK verifies that Overall returns OK when all results are healthy.
+func TestSummaryOverall_AllOK(t *testing.T) {
+	s := &report.Summary{
+		Timestamp: time.Now(),
+		Duration:  1 * time.Millisecond,
+		Results: []check.Result{
+			{Name: "db", Status: check.StatusOK, Message: "ok", Value: 1},
+			{Name: "cache", Status: check.StatusOK, Message: "ok", Value: 2},
+		},
+	}
+	if got := s.Overall(); got != check.StatusOK {
+		t.Errorf("expected OK, got %s", got)
+	}
+}
+
 func TestSummaryStatusCounts(t *testing.T) {
 	s := makeSummary()
 	counts := s.StatusCounts()
