@@ -42,6 +42,16 @@ func (w WindowStats) String() string {
 	)
 }
 
+// IsHealthy reports whether the window stats are considered healthy, defined
+// as having no critical or error results and an uptime of at least minUptime
+// percent (e.g. pass 99.0 for 99%).
+func (w WindowStats) IsHealthy(minUptime float64) bool {
+	if w.CritCount > 0 || w.ErrorCount > 0 {
+		return false
+	}
+	return w.Total == 0 || w.UptimePct >= minUptime
+}
+
 // ComputeWindow aggregates entries for each check within the given window
 // relative to now. Only entries whose Timestamp falls within [now-window, now]
 // are included.
